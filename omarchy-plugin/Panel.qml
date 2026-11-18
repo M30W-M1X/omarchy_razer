@@ -606,7 +606,7 @@ Panel {
 
         PanelSeparator { foreground: root.foreground }
 
-        // AI Reactive (Diablo Mode) section
+        // Adaptive Lighting section
         Column {
           width: parent.width
           spacing: Style.space(8)
@@ -668,7 +668,7 @@ Panel {
             focusable: false
             options: [
               { value: "omarchy-theme", label: strings.t("palette.omarchy") },
-              { value: "diablo", label: strings.t("palette.diablo") },
+              { value: "ember", label: strings.t("palette.ember") },
               { value: "cyberpunk", label: strings.t("palette.cyberpunk") }
             ]
             onChanged: function(v) { root.runAction(["palette", v]) }

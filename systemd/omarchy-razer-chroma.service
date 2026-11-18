@@ -1,5 +1,5 @@
 [Unit]
-Description=Omarchy Razer Chroma & AI Reactive Lighting Daemon
+Description=Omarchy Razer Chroma & Adaptive Lighting Daemon
 Wants=openrazer-daemon.service
 After=openrazer-daemon.service graphical-session.target
 

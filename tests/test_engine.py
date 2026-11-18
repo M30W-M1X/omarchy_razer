@@ -31,7 +31,7 @@ class TestThemeAndPalettes(unittest.TestCase):
         self.assertEqual(hex_to_rgb("invalid", (1, 2, 3)), (1, 2, 3))
 
     def test_all_palettes_have_all_states(self) -> None:
-        for pal_name in ("omarchy-theme", "diablo", "cyberpunk"):
+        for pal_name in ("omarchy-theme", "ember", "cyberpunk"):
             pal = get_palette(pal_name)
             for state in STATE_PRIORITY:
                 self.assertIn(state, pal, f"{pal_name} missing {state}")
@@ -126,8 +126,8 @@ class TestDaemonStateMachine(unittest.TestCase):
         snap = d.snapshot()
         self.assertEqual(snap["ai"]["state"], "thinking")
 
-        d.handle_command({"cmd": "set_palette", "palette": "diablo"})
-        self.assertEqual(d.config["palette"], "diablo")
+        d.handle_command({"cmd": "set_palette", "palette": "ember"})
+        self.assertEqual(d.config["palette"], "ember")
 
         d.handle_command({"cmd": "set_color", "color": "#44d62c", "target": "mouse"})
         self.assertEqual(d.config["mouseColor"], "#44d62c")

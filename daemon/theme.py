@@ -134,7 +134,7 @@ def get_theme_idle_rgb() -> RGB:
 
 def get_palette(palette_name: str) -> Dict[str, Tuple[RGB, RGB]]:
     """Return mapping of AI activity state -> (primary_rgb, secondary_rgb)."""
-    if palette_name == "diablo":
+    if palette_name in ("ember", "diablo"):
         return {
             "idle": ((196, 62, 18), (92, 16, 8)),
             "session_start": ((255, 168, 48), (180, 42, 12)),
@@ -200,7 +200,7 @@ def get_swatches() -> List[Dict[str, str]]:
         {"label": "Theme Blue", "hex": c["blue"], "group": "theme"},
         {"label": "Theme Magenta", "hex": c["magenta"], "group": "theme"},
         {"label": "Razer Green", "hex": "#44d62c", "group": "vivid"},
-        {"label": "Hellfire", "hex": "#ff4500", "group": "vivid"},
+        {"label": "Ember", "hex": "#ff4500", "group": "vivid"},
         {"label": "Arcane", "hex": "#9b4dff", "group": "vivid"},
         {"label": "Crimson", "hex": "#ff1744", "group": "vivid"},
         {"label": "Gold", "hex": "#ffc400", "group": "vivid"},

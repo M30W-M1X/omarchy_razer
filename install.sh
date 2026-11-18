@@ -30,7 +30,7 @@ echo "==> Installing systemd user service -> $SERVICE_DEST"
 mkdir -p "$SYSTEMD_DIR"
 cat > "$SERVICE_DEST" <<EOF
 [Unit]
-Description=Omarchy Razer Chroma & AI Reactive Lighting Daemon
+Description=Omarchy Razer Chroma & Adaptive Lighting Daemon
 Wants=openrazer-daemon.service
 After=openrazer-daemon.service graphical-session.target
 

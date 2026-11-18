@@ -2,7 +2,7 @@
 """Omarchy Razer Chroma background daemon.
 
 Controls Razer keyboard & mouse RGB lighting via OpenRazer and drives
-Diablo 4-style reactive lighting animations from AI harness lifecycle events.
+Adaptive Lighting animations from AI harness lifecycle events.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ logging.basicConfig(
 log = logging.getLogger("omarchy-razer")
 
 VALID_MODES = ("theme", "static", "breath", "wave", "spectrum", "reactive", "starlight", "off")
-VALID_PALETTES = ("omarchy-theme", "diablo", "cyberpunk")
+VALID_PALETTES = ("omarchy-theme", "ember", "cyberpunk")
 
 # Higher priority wins when multiple AI sessions are active simultaneously
 STATE_PRIORITY: Dict[str, int] = {
@@ -127,7 +127,7 @@ class RazerChromaDaemon:
             "mouseColor": "",  # optional per-device override
             "brightness": 85,
             "aiReactive": True,
-            "palette": "omarchy-theme",  # omarchy-theme | diablo | cyberpunk
+            "palette": "omarchy-theme",  # omarchy-theme | ember | cyberpunk
             "fps": 20,
             "sessionTimeoutSec": DEFAULT_SESSION_TTL,
         }
@@ -145,6 +145,8 @@ class RazerChromaDaemon:
         # Validate fields
         if cfg.get("mode") not in VALID_MODES:
             cfg["mode"] = "theme"
+        if cfg.get("palette") == "diablo":
+            cfg["palette"] = "ember"
         if cfg.get("palette") not in VALID_PALETTES:
             cfg["palette"] = "omarchy-theme"
         cfg["brightness"] = max(0, min(100, int(cfg.get("brightness", 85))))
@@ -379,6 +381,8 @@ class RazerChromaDaemon:
 
             if cmd == "set_palette":
                 pal = str(req.get("palette", "omarchy-theme")).strip().lower()
+                if pal == "diablo":
+                    pal = "ember"
                 if pal not in VALID_PALETTES:
                     return {"ok": False, "error": f"Invalid palette: {pal}"}
                 self.config["palette"] = pal

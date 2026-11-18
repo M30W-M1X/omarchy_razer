@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Antigravity (AGY) lifecycle hook for Omarchy Razer Chroma.
 
-Maps AGY conversation lifecycle events into reactive Diablo-style lighting
+Maps AGY conversation lifecycle events into Adaptive Lighting
 events over the local Unix socket, then immediately emits `{}` on stdout so
 AGY execution is never blocked or altered.
 """

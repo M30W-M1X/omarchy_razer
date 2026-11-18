@@ -1,4 +1,4 @@
-"""Diablo 4-inspired procedural per-key RGB matrix and mouse animations."""
+"""Procedural per-key RGB matrix and mouse animations for Adaptive Lighting."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def render_matrix_frame(
         return frame
 
     if state == "tool_command":
-        # Hellfire forge: fiery rising embers from bottom row to top row
+        # Rising embers from bottom row to top row during command execution
         step = int(elapsed * 14.0)
         frac = (elapsed * 14.0) - step
         hot_core = blend(secondary, (255, 245, 200), 0.45)
@@ -163,7 +163,7 @@ def render_matrix_frame(
         return frame
 
     if state == "error":
-        # Diablo low-HP / damage taken: sharp crimson shockwave + double heartbeat pulse
+        # Crimson alert: sharp shockwave + double heartbeat pulse
         cycle = elapsed % 0.95
         if cycle < 0.16:
             beat = math.sin((cycle / 0.16) * math.pi)
@@ -171,7 +171,7 @@ def render_matrix_frame(
             beat = 0.85 * math.sin(((cycle - 0.24) / 0.18) * math.pi)
         else:
             beat = 0.12
-        # Subtle outward vignette emphasis on edges like Diablo damage vignette
+        # Subtle outward vignette emphasis on edges
         for r in range(rows):
             for c in range(cols):
                 edge = math.hypot(c - cx, (r - cy) * 1.6) / max_dist
@@ -180,7 +180,7 @@ def render_matrix_frame(
         return frame
 
     if state == "attention":
-        # Sanctuary beacon: pulsing golden/amber ring from center outward
+        # Attention beacon: pulsing amber ring from center outward
         ring = (elapsed * 1.6) % 1.25
         for r in range(rows):
             for c in range(cols):
@@ -191,7 +191,7 @@ def render_matrix_frame(
         return frame
 
     if state == "complete":
-        # Legendary loot drop: radial shockwave burst expanding outward + golden shimmer
+        # Completion burst: radial shockwave expanding outward + shimmer
         burst_r = elapsed * 1.75
         fade = max(0.0, 1.0 - max(0.0, elapsed - 1.6) / 1.4)
         spark_step = int(elapsed * 12.0)
