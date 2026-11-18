@@ -1,0 +1,13 @@
+[Unit]
+Description=Omarchy Razer Chroma & AI Reactive Lighting Daemon
+Wants=openrazer-daemon.service
+After=openrazer-daemon.service graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/Projects/omarchy_razer/daemon/razer_chroma_daemon.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

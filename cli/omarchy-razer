@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""CLI client for the Omarchy Razer Chroma daemon."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import socket
+import sys
+from pathlib import Path
+from typing import Any, Dict
+
+
+def get_socket_path() -> Path:
+    runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/tmp/omarchy-razer-{os.getuid()}"))
+    return runtime / "omarchy-razer-chroma.sock"
+
+
+def send_request(payload: Dict[str, Any], timeout: float = 2.0) -> Dict[str, Any]:
+    spath = get_socket_path()
+    if not spath.exists():
+        return {
+            "ok": False,
+            "daemonActive": False,
+            "error": "omarchy-razer-chroma daemon is not running",
+        }
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            sock.connect(str(spath))
+            sock.sendall((json.dumps(payload) + "\n").encode("utf-8"))
+            chunks = []
+            while True:
+                data = sock.recv(65536)
+                if not data:
+                    break
+                chunks.append(data)
+                if b"\n" in data:
+                    break
+            raw = b"".join(chunks).decode("utf-8", errors="ignore").strip()
+            return json.loads(raw) if raw else {"ok": False, "error": "Empty response"}
+    except Exception as exc:
+        return {"ok": False, "daemonActive": False, "error": str(exc)}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="omarchy-razer",
+        description="Control Razer Chroma lighting and AI-reactive Diablo effects on Omarchy",
+    )
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("status", help="Show daemon, device, and lighting status as JSON")
+    sub.add_parser("rescan", help="Rescan connected Razer devices")
+    sub.add_parser("reload-theme", help="Reload active Omarchy theme colors")
+
+    p_power = sub.add_parser("power", help="Turn Razer lighting on or off")
+    p_power.add_argument("state", choices=["on", "off"])
+
+    p_mode = sub.add_parser("mode", help="Set idle lighting mode")
+    p_mode.add_argument(
+        "mode",
+        choices=["theme", "static", "breath", "wave", "spectrum", "reactive", "starlight", "off"],
+    )
+
+    p_color = sub.add_parser("color", help="Set static/primary color (#RRGGBB)")
+    p_color.add_argument("hex_color")
+    p_color.add_argument("--target", choices=["all", "keyboard", "mouse"], default="all")
+
+    p_sec = sub.add_parser("secondary-color", help="Set secondary effect color (#RRGGBB)")
+    p_sec.add_argument("hex_color")
+
+    p_bright = sub.add_parser("brightness", help="Set brightness (0-100)")
+    p_bright.add_argument("level", type=int)
+
+    p_react = sub.add_parser("reactive", help="Enable or disable AI reactive lighting")
+    p_react.add_argument("state", choices=["on", "off"])
+
+    p_pal = sub.add_parser("palette", help="Set AI reactive color palette")
+    p_pal.add_argument("palette", choices=["omarchy-theme", "diablo", "cyberpunk"])
+
+    p_prev = sub.add_parser("preview", help="Preview an AI reactive effect")
+    p_prev.add_argument(
+        "state",
+        choices=[
+            "session_start",
+            "thinking",
+            "tool_command",
+            "tool_edit",
+            "tool_read",
+            "tool_agent",
+            "error",
+            "attention",
+            "complete",
+            "idle",
+        ],
+    )
+    p_prev.add_argument("--duration", type=float, default=3.5)
+
+    p_ai = sub.add_parser("ai-event", help="Report an AI harness activity state")
+    p_ai.add_argument("state")
+    p_ai.add_argument("--session", default="default")
+    p_ai.add_argument("--source", default="agy")
+    p_ai.add_argument("--tool", default="")
+    p_ai.add_argument("--detail", default="")
+
+    args = parser.parse_args()
+    cmd = args.command or "status"
+
+    if cmd == "status":
+        req: Dict[str, Any] = {"cmd": "status"}
+    elif cmd == "rescan":
+        req = {"cmd": "rescan"}
+    elif cmd == "reload-theme":
+        req = {"cmd": "reload_theme"}
+    elif cmd == "power":
+        req = {"cmd": "set_enabled", "enabled": args.state == "on"}
+    elif cmd == "mode":
+        req = {"cmd": "set_mode", "mode": args.mode}
+    elif cmd == "color":
+        req = {"cmd": "set_color", "color": args.hex_color, "target": args.target}
+    elif cmd == "secondary-color":
+        req = {"cmd": "set_secondary_color", "color": args.hex_color}
+    elif cmd == "brightness":
+        req = {"cmd": "set_brightness", "brightness": args.level}
+    elif cmd == "reactive":
+        req = {"cmd": "set_reactive", "enabled": args.state == "on"}
+    elif cmd == "palette":
+        req = {"cmd": "set_palette", "palette": args.palette}
+    elif cmd == "preview":
+        req = {"cmd": "preview", "state": args.state, "duration": args.duration}
+    elif cmd == "ai-event":
+        req = {
+            "cmd": "ai_event",
+            "state": args.state,
+            "session": args.session,
+            "source": args.source,
+            "tool": args.tool,
+            "detail": args.detail,
+        }
+    else:
+        req = {"cmd": "status"}
+
+    resp = send_request(req)
+    print(json.dumps(resp))
+    return 0 if resp.get("ok") else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
