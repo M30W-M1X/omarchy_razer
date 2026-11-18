@@ -659,19 +659,34 @@ Panel {
             }
           }
 
-          ButtonGroup {
+          Flow {
             width: parent.width
-            value: root.palette
-            foreground: root.foreground
-            fontFamily: root.fontFamily
-            fontSize: Style.font.caption
-            focusable: false
-            options: [
-              { value: "omarchy-theme", label: strings.t("palette.omarchy") },
-              { value: "ember", label: strings.t("palette.ember") },
-              { value: "cyberpunk", label: strings.t("palette.cyberpunk") }
-            ]
-            onChanged: function(v) { root.runAction(["palette", v]) }
+            spacing: Style.space(6)
+
+            Repeater {
+              model: [
+                { value: "omarchy-theme", label: strings.t("palette.omarchy") },
+                { value: "ember", label: strings.t("palette.ember") },
+                { value: "cyberpunk", label: strings.t("palette.cyberpunk") },
+                { value: "tokyo-night", label: strings.t("palette.tokyo-night") },
+                { value: "synthwave", label: strings.t("palette.synthwave") },
+                { value: "aurora", label: strings.t("palette.aurora") },
+                { value: "matrix", label: strings.t("palette.matrix") },
+                { value: "sakura", label: strings.t("palette.sakura") },
+                { value: "arctic", label: strings.t("palette.arctic") },
+                { value: "solar", label: strings.t("palette.solar") }
+              ]
+              delegate: Button {
+                required property var modelData
+                text: modelData.label
+                selected: root.palette === modelData.value
+                bordered: true
+                foreground: root.foreground
+                fontFamily: root.fontFamily
+                fontSize: Style.font.caption
+                onClicked: root.runAction(["palette", modelData.value])
+              }
+            }
           }
 
           Column {

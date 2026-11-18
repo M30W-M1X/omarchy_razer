@@ -37,7 +37,7 @@ def render_matrix_frame(
 
     if state == "session_start":
         # Portal ignition: sweeping beam from left to right with warm afterglow
-        progress = min(1.35, elapsed * 1.4)
+        progress = min(1.35, elapsed * 1.9)
         beam_x = progress * cols
         for r in range(rows):
             for c in range(cols):
@@ -51,23 +51,23 @@ def render_matrix_frame(
         return frame
 
     if state == "thinking":
-        # Arcane channeling: smooth sweeping wave back and forth + shimmering mana bed
-        pos = (math.sin(elapsed * 2.4) * 0.5 + 0.5) * (cols - 1)
+        # Channeling wave: smooth brisk sweep back and forth + shimmering ambient bed
+        pos = (math.sin(elapsed * 3.4) * 0.5 + 0.5) * (cols - 1)
         bed = scale_rgb(secondary, 0.22)
         for r in range(rows):
-            row_phase = math.sin(elapsed * 3.1 + r * 0.65) * 0.5 + 0.5
+            row_phase = math.sin(elapsed * 4.4 + r * 0.65) * 0.5 + 0.5
             for c in range(cols):
                 dist = abs(c - pos)
                 beam = math.exp(-(dist * dist) / max(2.2, (cols * 0.17) ** 2))
-                shimmer = 0.15 * (math.sin(elapsed * 4.5 + c * 0.55 - r * 0.7) * 0.5 + 0.5)
+                shimmer = 0.16 * (math.sin(elapsed * 6.0 + c * 0.55 - r * 0.7) * 0.5 + 0.5)
                 color = blend(bed, primary, min(1.0, beam * 0.95 + shimmer * row_phase))
                 frame[r][c] = color
         return frame
 
     if state == "tool_command":
         # Rising embers from bottom row to top row during command execution
-        step = int(elapsed * 14.0)
-        frac = (elapsed * 14.0) - step
+        step = int(elapsed * 18.0)
+        frac = (elapsed * 18.0) - step
         hot_core = blend(secondary, (255, 245, 200), 0.45)
         for r in range(rows):
             # y=0 at bottom row, y=1 at top row
@@ -76,7 +76,7 @@ def render_matrix_frame(
                 n0 = _hash01(c, r + step, 17)
                 n1 = _hash01(c, r + step + 1, 17)
                 flicker = n0 * (1.0 - frac) + n1 * frac
-                wave = math.sin(elapsed * 6.5 + c * 0.8 + r * 0.4) * 0.15
+                wave = math.sin(elapsed * 8.5 + c * 0.8 + r * 0.4) * 0.15
                 heat = max(0.0, min(1.0, (1.0 - y * 0.72) * (0.55 + 0.55 * flicker) + wave))
                 if heat > 0.78:
                     frame[r][c] = blend(secondary, hot_core, (heat - 0.78) / 0.22)
@@ -87,10 +87,10 @@ def render_matrix_frame(
         return frame
 
     if state == "tool_edit":
-        # Runeforging: crisp runner on number row + typing/crafting sparks across keys
-        runner = (elapsed * cols * 1.15) % cols
-        spark_tick = int(elapsed * 10.0)
-        spark_frac = (elapsed * 10.0) - spark_tick
+        # Crisp runner on number row + typing/crafting sparks across keys
+        runner = (elapsed * cols * 1.55) % cols
+        spark_tick = int(elapsed * 14.0)
+        spark_frac = (elapsed * 14.0) - spark_tick
         bed = scale_rgb(secondary, 0.16)
         for r in range(rows):
             for c in range(cols):
@@ -106,14 +106,14 @@ def render_matrix_frame(
                         val = max(val, 1.0 - spark_frac * 0.55)
                     if s_prev > 0.89:
                         val = max(val, (1.0 - spark_frac) * 0.45)
-                    pulse = 0.12 * (math.sin(elapsed * 4.0 + c * 0.4) * 0.5 + 0.5)
+                    pulse = 0.12 * (math.sin(elapsed * 5.2 + c * 0.4) * 0.5 + 0.5)
                     frame[r][c] = blend(bed, primary, min(1.0, val + pulse))
         return frame
 
     if state == "tool_read":
-        # Arcane radar: dual crisp scanning columns sweeping across the matrix
-        scan_a = (elapsed * cols * 0.85) % cols
-        scan_b = (cols - 1) - ((elapsed * cols * 0.55) % cols)
+        # Dual crisp scanning columns sweeping across the matrix
+        scan_a = (elapsed * cols * 1.15) % cols
+        scan_b = (cols - 1) - ((elapsed * cols * 0.8) % cols)
         bed = scale_rgb(secondary, 0.14)
         for r in range(rows):
             for c in range(cols):

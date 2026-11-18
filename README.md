@@ -12,10 +12,9 @@ An [Omarchy](https://omarchy.org/) shell bar plugin + background daemon that con
   - **Built-in Effect Previews**: Test `Think`, `Run`, `Edit`, `Error`, and `Done` animations straight from the bar popup.
 - **Per-Key Adaptive Lighting Engine**:
   - Drives per-key RGB matrix animations on matrix-capable keyboards (e.g., Razer Huntsman Mini `5x15`) and multi-zone/matrix mice (e.g., Razer Lancehead Wireless `1x16`).
-  - **3 Built-in Palettes**:
-    - **Omarchy Theme (default)**: Automatically derives every Adaptive Lighting state color from your active Omarchy theme's `colors.toml` and updates live when you switch themes!
-    - **Ember**: Deep violet thinking sweeps, rising ember orange for shell commands, warm gold for code edits, crimson alert pulses, and golden completion bursts.
-    - **Cyberpunk Neon**: Electric cyan, hot magenta, acid lime, and warning crimson.
+  - **10 Built-in Themes**:
+    - **Omarchy** (default): Automatically derives every Adaptive Lighting state color from your active Omarchy theme's `colors.toml` and updates live when you switch themes.
+    - **Ember**, **Neon**, **Tokyo**, **Synthwave**, **Aurora**, **Matrix**, **Sakura**, **Arctic**, and **Solar**.
 
 ### AI Activity → Adaptive Lighting Map
 

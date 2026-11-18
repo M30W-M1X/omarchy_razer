@@ -27,7 +27,9 @@ from daemon.animations import render_matrix_frame, render_mouse_color
 from daemon.devices import RazerController
 from daemon.theme import (
     RGB,
+    VALID_PALETTES,
     get_palette,
+    get_palette_list,
     get_swatches,
     get_theme_idle_rgb,
     hex_to_rgb,
@@ -43,7 +45,6 @@ logging.basicConfig(
 log = logging.getLogger("omarchy-razer")
 
 VALID_MODES = ("theme", "static", "breath", "wave", "spectrum", "reactive", "starlight", "off")
-VALID_PALETTES = ("omarchy-theme", "ember", "cyberpunk")
 
 # Higher priority wins when multiple AI sessions are active simultaneously
 STATE_PRIORITY: Dict[str, int] = {
@@ -116,6 +117,7 @@ class RazerChromaDaemon:
         self._manual_dirty: bool = True
         self._last_state_write: float = 0.0
         self._last_theme_mtime: float = self._theme_mtime()
+        self._last_aux_draw: Dict[str, float] = {}
 
     def _default_config(self) -> Dict[str, Any]:
         return {
@@ -127,8 +129,8 @@ class RazerChromaDaemon:
             "mouseColor": "",  # optional per-device override
             "brightness": 85,
             "aiReactive": True,
-            "palette": "omarchy-theme",  # omarchy-theme | ember | cyberpunk
-            "fps": 20,
+            "palette": "omarchy-theme",
+            "fps": 30,
             "sessionTimeoutSec": DEFAULT_SESSION_TTL,
         }
 
@@ -150,7 +152,7 @@ class RazerChromaDaemon:
         if cfg.get("palette") not in VALID_PALETTES:
             cfg["palette"] = "omarchy-theme"
         cfg["brightness"] = max(0, min(100, int(cfg.get("brightness", 85))))
-        cfg["fps"] = max(8, min(30, int(cfg.get("fps", 20))))
+        cfg["fps"] = max(10, min(60, int(cfg.get("fps", 30))))
         return cfg
 
     def _save_config(self) -> None:
@@ -235,6 +237,16 @@ class RazerChromaDaemon:
         elapsed = max(0.0, now - self._active_ai_started)
 
         for info in self.controller.get_device_infos():
+            # OpenRazer's D-Bus daemon serializes USB HID writes across devices.
+            # Drive the keyboard matrix every tick at full hardware FPS and pace
+            # auxiliary devices (mice/mats) cleanly so they don't halve keyboard FPS.
+            is_primary_kbd = info.device_type == "keyboard"
+            if not is_primary_kbd:
+                last_aux = self._last_aux_draw.get(info.serial, 0.0)
+                if (now - last_aux) < 0.16:
+                    continue
+                self._last_aux_draw[info.serial] = now
+
             if info.has_matrix:
                 frame = render_matrix_frame(
                     self._active_ai_state,
@@ -282,6 +294,7 @@ class RazerChromaDaemon:
                     "palette": palette_name,
                 },
                 "themeColors": theme_colors,
+                "palettes": get_palette_list(),
                 "swatches": get_swatches(),
             }
 
@@ -552,21 +565,25 @@ class RazerChromaDaemon:
                     self._active_ai_detail = detail
 
                 if self._active_ai_state != "idle":
-                    self._step_ai_animation(now)
-                    sleep_for = 1.0 / float(self.config.get("fps", 20))
+                    frame_start = time.monotonic()
+                    self._step_ai_animation(frame_start)
+                    target_dt = 1.0 / float(self.config.get("fps", 30))
+                    elapsed_draw = time.monotonic() - frame_start
+                    sleep_for = max(0.0, target_dt - elapsed_draw)
                 else:
                     if not self.controller.connected:
                         if self.controller.ensure_connected():
                             self._manual_dirty = True
                     if self._manual_dirty:
                         self._apply_idle_lighting()
-                    sleep_for = 0.15
+                    sleep_for = 0.12
 
                 if state_changed or (now - self._last_state_write) >= 1.5:
                     self._last_state_write = now
                     self._write_state_file()
 
-            self.stop_event.wait(sleep_for)
+            if sleep_for > 0:
+                self.stop_event.wait(sleep_for)
 
         sock_thread.join(timeout=2.0)
 

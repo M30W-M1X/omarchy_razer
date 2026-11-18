@@ -78,7 +78,21 @@ def main() -> int:
     p_react.add_argument("state", choices=["on", "off"])
 
     p_pal = sub.add_parser("palette", help="Set Adaptive Lighting color palette")
-    p_pal.add_argument("palette", choices=["omarchy-theme", "ember", "cyberpunk"])
+    p_pal.add_argument(
+        "palette",
+        choices=[
+            "omarchy-theme",
+            "ember",
+            "cyberpunk",
+            "tokyo-night",
+            "synthwave",
+            "aurora",
+            "matrix",
+            "sakura",
+            "arctic",
+            "solar",
+        ],
+    )
 
     p_prev = sub.add_parser("preview", help="Preview an AI reactive effect")
     p_prev.add_argument(

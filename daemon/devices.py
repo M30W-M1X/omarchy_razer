@@ -72,6 +72,8 @@ class RazerController:
         self._manager: Any = None
         self._devices: Dict[str, Any] = {}
         self._infos: Dict[str, DeviceInfo] = {}
+        self._in_custom_mode: Dict[str, bool] = {}
+        self._last_row_bytes: Dict[str, Dict[int, bytes]] = {}
         self._last_static_rgb: Dict[str, RGB] = {}
         self._last_static_ts: Dict[str, float] = {}
         self._last_reconnect_attempt: float = 0.0
@@ -250,6 +252,8 @@ class RazerController:
             return
 
         self._last_static_rgb.pop(serial, None)
+        self._in_custom_mode[serial] = False
+        self._last_row_bytes.pop(serial, None)
         r, g, b = primary
         r2, g2, b2 = secondary
 
@@ -335,14 +339,49 @@ class RazerController:
         if dev is None or info is None or not info.has_matrix:
             return False
         try:
-            matrix = dev.fx.advanced.matrix
+            adv = dev.fx.advanced
             rows = min(info.matrix_rows, len(frame))
-            for r in range(rows):
-                row_data = frame[r]
-                cols = min(info.matrix_cols, len(row_data))
-                for c in range(cols):
-                    matrix[r, c] = row_data[c]
-            dev.fx.advanced.draw()
+            cols = info.matrix_cols
+            lighting_dbus = getattr(adv, "_lighting_dbus", None)
+
+            if lighting_dbus is not None:
+                prev_rows = self._last_row_bytes.setdefault(serial, {})
+                payload = bytearray()
+                stop_col = cols - 1
+                for r in range(rows):
+                    row_data = frame[r]
+                    row_buf = bytearray(3 + cols * 3)
+                    row_buf[0] = r
+                    row_buf[1] = 0
+                    row_buf[2] = stop_col
+                    pos = 3
+                    limit = min(cols, len(row_data))
+                    for c in range(limit):
+                        rgb = row_data[c]
+                        row_buf[pos] = rgb[0]
+                        row_buf[pos + 1] = rgb[1]
+                        row_buf[pos + 2] = rgb[2]
+                        pos += 3
+                    row_bytes = bytes(row_buf)
+                    if prev_rows.get(r) != row_bytes:
+                        prev_rows[r] = row_bytes
+                        payload.extend(row_bytes)
+
+                if payload:
+                    lighting_dbus.setKeyRow(bytes(payload))
+                if not self._in_custom_mode.get(serial, False):
+                    lighting_dbus.setCustom()
+                    self._in_custom_mode[serial] = True
+            else:
+                matrix = adv.matrix
+                for r in range(rows):
+                    row_data = frame[r]
+                    c_lim = min(cols, len(row_data))
+                    for c in range(c_lim):
+                        matrix[r, c] = row_data[c]
+                adv.draw()
+                self._in_custom_mode[serial] = True
+
             info.last_color = rgb_to_hex(representative)
             return True
         except Exception as exc:
@@ -447,3 +486,5 @@ class RazerController:
         # Force a lazy reconnect on next cycle
         self._manager = None
         self._devices.clear()
+        self._in_custom_mode.clear()
+        self._last_row_bytes.clear()

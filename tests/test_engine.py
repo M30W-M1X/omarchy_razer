@@ -13,7 +13,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from daemon.animations import render_matrix_frame, render_mouse_color
 from daemon.razer_chroma_daemon import RazerChromaDaemon, STATE_PRIORITY
-from daemon.theme import get_palette, get_swatches, hex_to_rgb, read_omarchy_theme_colors, rgb_to_hex
+from daemon.theme import VALID_PALETTES, get_palette, get_swatches, hex_to_rgb, read_omarchy_theme_colors, rgb_to_hex
 
 
 def _load_agy_hook():
@@ -31,7 +31,8 @@ class TestThemeAndPalettes(unittest.TestCase):
         self.assertEqual(hex_to_rgb("invalid", (1, 2, 3)), (1, 2, 3))
 
     def test_all_palettes_have_all_states(self) -> None:
-        for pal_name in ("omarchy-theme", "ember", "cyberpunk"):
+        self.assertGreaterEqual(len(VALID_PALETTES), 10)
+        for pal_name in VALID_PALETTES:
             pal = get_palette(pal_name)
             for state in STATE_PRIORITY:
                 self.assertIn(state, pal, f"{pal_name} missing {state}")
